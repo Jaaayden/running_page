@@ -1,4 +1,3 @@
-
 FROM python:3.10.5-slim AS develop-py
 WORKDIR /root/running_page
 COPY ./requirements.txt /root/running_page/requirements.txt
@@ -18,9 +17,9 @@ WORKDIR /root/running_page
 COPY ./package.json /root/running_page/package.json
 COPY ./pnpm-lock.yaml /root/running_page/pnpm-lock.yaml
 RUN npm config rm proxy&&npm config set registry https://registry.npmjs.org/ \
-  &&npm install -g corepack \
+  &&npm install -g corepack pnpm\
   &&corepack enable \
-  &&yarn install
+  &&pnpm install
 
 FROM develop-py AS data
 ARG app
@@ -61,7 +60,7 @@ RUN python3 run_page/gen_svg.py --from-db --title "my running page" --type grid 
 FROM develop-node AS frontend-build
 WORKDIR /root/running_page
 COPY --from=data /root/running_page /root/running_page
-RUN yarn run build
+RUN pnpm build
 
 FROM nginx:alpine AS web
 COPY --from=frontend-build /root/running_page/dist /usr/share/nginx/html/
